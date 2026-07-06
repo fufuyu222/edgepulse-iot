@@ -28,3 +28,4 @@ mosquitto-data/
 # Temporary files
 tmp/
 temp/
+tools/

@@ -1,0 +1,22 @@
+### Ingest telemetry without MQTT
+POST http://localhost:8080/api/telemetry
+Content-Type: application/json
+
+{
+  "deviceId": "dev001",
+  "temperature": 86.5,
+  "voltage": 220,
+  "timestamp": "2026-07-06T11:00:00Z"
+}
+
+### Dashboard summary
+GET http://localhost:8080/api/dashboard/summary
+
+### Devices
+GET http://localhost:8080/api/devices
+
+### Latest telemetry
+GET http://localhost:8080/api/telemetry/latest
+
+### Alarms
+GET http://localhost:8080/api/alarms

@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: edgepulse-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:edgepulse;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+
+edgepulse:
+  mqtt:
+    enabled: ${EDGEPULSE_MQTT_ENABLED:true}
+    broker-url: ${EDGEPULSE_MQTT_BROKER_URL:tcp://localhost:1883}
+    client-id: ${EDGEPULSE_MQTT_CLIENT_ID:edgepulse-backend}
+    username: ${EDGEPULSE_MQTT_USERNAME:}
+    password: ${EDGEPULSE_MQTT_PASSWORD:}
+    telemetry-topic: ${EDGEPULSE_MQTT_TELEMETRY_TOPIC:iot/device/+/telemetry}
+  redis:
+    enabled: ${EDGEPULSE_REDIS_ENABLED:true}
