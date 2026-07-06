@@ -44,6 +44,12 @@ infra/            Mosquitto and deployment configuration
 docs/             API examples and project notes
 ```
 
+Key learning document:
+
+```text
+docs/project-learning-map.md
+```
+
 ## Quick Start With Docker
 
 ```bash
