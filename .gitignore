@@ -1,0 +1,30 @@
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# Java / Spring Boot
+target/
+*.class
+*.jar
+*.war
+
+# Node / Vue
+node_modules/
+dist/
+.env
+.env.local
+
+# Docker / runtime data
+mysql-data/
+redis-data/
+mosquitto-data/
+
+# Temporary files
+tmp/
+temp/
