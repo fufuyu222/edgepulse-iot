@@ -11,5 +11,6 @@ export const api = {
   latestTelemetry: () => http.get('/telemetry/latest').then((res) => res.data),
   telemetryByDevice: (deviceId) => http.get(`/telemetry/${deviceId}`).then((res) => res.data),
   alarms: () => http.get('/alarms').then((res) => res.data),
+  alarmRules: () => http.get('/alarm-rules').then((res) => res.data),
   updateAlarmStatus: (id, status) => http.patch(`/alarms/${id}/status`, null, { params: { status } }).then((res) => res.data)
 }

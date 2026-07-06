@@ -9,15 +9,20 @@
         </div>
       </div>
       <nav>
-        <button class="nav-item active">总览</button>
-        <button class="nav-item">设备</button>
-        <button class="nav-item">告警</button>
-        <button class="nav-item">规则</button>
+        <button
+          v-for="item in navItems"
+          :key="item.key"
+          class="nav-item"
+          :class="{ active: activeSection === item.key }"
+          @click="scrollToSection(item.key)"
+        >
+          {{ item.label }}
+        </button>
       </nav>
     </aside>
 
     <main class="main-panel">
-      <header class="topbar">
+      <header ref="overviewRef" class="topbar section-anchor">
         <div>
           <h2>工业设备监控</h2>
           <span>MQTT 数据接入 · 实时状态 · 规则告警</span>
@@ -46,7 +51,7 @@
         </div>
       </section>
 
-      <section class="content-grid">
+      <section ref="devicesRef" class="content-grid section-anchor">
         <div class="panel device-panel">
           <div class="panel-header">
             <h3>设备列表</h3>
@@ -74,7 +79,7 @@
         </div>
       </section>
 
-      <section class="panel">
+      <section ref="alarmsRef" class="panel section-anchor">
         <div class="panel-header">
           <h3>告警中心</h3>
           <span>ACTIVE → ACKED → RESOLVED</span>
@@ -104,6 +109,31 @@
           </el-table-column>
         </el-table>
       </section>
+
+      <section ref="rulesRef" class="panel section-anchor">
+        <div class="panel-header">
+          <h3>告警规则</h3>
+          <span>数据库配置的阈值规则</span>
+        </div>
+        <el-table :data="rules" height="220" empty-text="暂无规则">
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column prop="deviceId" label="设备范围" width="110" />
+          <el-table-column prop="metricName" label="指标" width="140" />
+          <el-table-column prop="operator" label="条件" width="100" />
+          <el-table-column prop="threshold" label="阈值" width="100" />
+          <el-table-column label="等级" width="120">
+            <template #default="{ row }">
+              <el-tag :type="row.level === 'CRITICAL' ? 'danger' : 'warning'" size="small">{{ row.level }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="启用" width="100">
+            <template #default="{ row }">
+              <el-tag :type="row.enabled ? 'success' : 'info'" size="small">{{ row.enabled ? 'ON' : 'OFF' }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="suppressMinutes" label="抑制分钟" width="120" />
+        </el-table>
+      </section>
     </main>
   </div>
 </template>
@@ -113,34 +143,60 @@ import * as echarts from 'echarts'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { api } from './api'
 
+const navItems = [
+  { key: 'overview', label: '总览' },
+  { key: 'devices', label: '设备' },
+  { key: 'alarms', label: '告警' },
+  { key: 'rules', label: '规则' }
+]
+
 const summary = ref({ totalDevices: 0, onlineDevices: 0, activeAlarms: 0, todayAlarms: 0 })
 const devices = ref([])
 const telemetry = ref([])
 const alarms = ref([])
+const rules = ref([])
 const connected = ref(false)
 const selectedDevice = ref('')
+const activeSection = ref('overview')
+const overviewRef = ref(null)
+const devicesRef = ref(null)
+const alarmsRef = ref(null)
+const rulesRef = ref(null)
 const chartRef = ref(null)
 let chart
 let eventSource
 let timer
 
 async function loadAll() {
-  const [summaryData, deviceData, telemetryData, alarmData] = await Promise.all([
+  const [summaryData, deviceData, telemetryData, alarmData, ruleData] = await Promise.all([
     api.summary(),
     api.devices(),
     api.latestTelemetry(),
-    api.alarms()
+    api.alarms(),
+    api.alarmRules()
   ])
   summary.value = summaryData
   devices.value = deviceData
   telemetry.value = telemetryData.reverse()
   alarms.value = alarmData
+  rules.value = ruleData
   renderChart()
 }
 
 async function changeAlarm(id, status) {
   await api.updateAlarmStatus(id, status)
   await loadAll()
+}
+
+function scrollToSection(key) {
+  activeSection.value = key
+  const target = {
+    overview: overviewRef,
+    devices: devicesRef,
+    alarms: alarmsRef,
+    rules: rulesRef
+  }[key]
+  target?.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 function renderChart() {
