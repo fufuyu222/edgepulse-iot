@@ -1,226 +1,170 @@
-# EdgePulse IoT 项目学习地图
+# EdgePulse IoT 从零搭建复盘说明
 
-这份文档的目标不是从零啃完物联网专业体系，而是围绕当前项目形成一套短期高收益的学习路径：
+这份文档不是知识清单，也不是项目使用说明书。
 
-- 能看懂项目为什么这样设计
-- 能按开发顺序补知识
-- 能把功能讲成工程能力
-- 能应对简历和面试追问
+它的目标是帮你在短期内把这个项目变成“你自己的项目”：
 
-当前项目主线：
+- 你知道为什么要做这个项目
+- 你知道每一步先做什么、后做什么
+- 你知道每个模块解决了什么问题
+- 你知道怎么验证它确实跑通了
+- 你能在面试里用自己的话讲出来
 
-```text
-Edge Simulator
-  -> MQTT Broker
-  -> Spring Boot Backend
-  -> MySQL / Redis
-  -> Rule Alert
-  -> SSE
-  -> Vue Dashboard
-  -> Docker Compose
-```
-
-## 1. 还需要补充的知识点
-
-你原来的清单已经覆盖了大部分核心内容，但为了更适合投简历，还建议补充这些高收益点。
-
-### 1.1 接口设计与数据流
-
-需要掌握：
-
-- REST API 如何设计
-- 前端如何调用后端接口
-- DTO、Entity、Repository、Service、Controller 的职责划分
-- 一条设备数据从进入系统到展示出来经历了哪些层
-
-项目对应：
-
-- `TelemetryController`
-- `TelemetryService`
-- `TelemetryData`
-- `TelemetryRepository`
-- `frontend/src/api.js`
-
-面试讲法：
-
-> 我把数据上报入口放在 TelemetryController，业务处理放在 TelemetryService，数据库访问通过 Repository 完成。这样接口层、业务层、持久层职责比较清楚。
-
-### 1.2 数据库建模
-
-需要掌握：
-
-- 设备表怎么设计
-- 遥测数据表怎么设计
-- 告警规则表怎么设计
-- 告警记录表怎么设计
-- 为什么设备状态和历史数据要分开
-
-项目对应：
-
-- `Device`
-- `TelemetryData`
-- `AlarmRule`
-- `Alarm`
-
-面试重点：
-
-> 设备信息是相对稳定的数据，遥测数据是持续增长的历史数据，实时状态适合放 Redis，历史数据适合放 MySQL 或时序数据库。
-
-### 1.3 缓存与实时状态
-
-需要掌握：
-
-- Redis 在这个项目里不是替代数据库，而是存实时状态
-- `device:status:{id}` 这种 key 如何表达业务含义
-- Redis 挂了以后系统是否还能工作
-
-项目对应：
-
-- `DeviceStatusCache`
-
-面试讲法：
-
-> MySQL 是权威数据源，Redis 是加速层。设备最后在线状态会写数据库，同时同步到 Redis，方便实时查询。
-
-### 1.4 异常处理与系统可用性
-
-需要掌握：
-
-- MQTT broker 不可用怎么办
-- Redis 不可用怎么办
-- 设备数据格式错误怎么办
-- 重复告警怎么避免
-- Docker 容器启动顺序怎么控制
-
-项目对应：
-
-- `MqttTelemetrySubscriber`
-- `DeviceStatusCache`
-- `ApiExceptionHandler`
-- `docker-compose.yml`
-- `AlarmService`
-
-短期建议：
-
-第一版不需要做到企业级容错，但必须能讲清楚当前做了什么、未来怎么补。
-
-### 1.5 日志与排错
-
-需要掌握：
-
-- 怎么看后端日志
-- 怎么看模拟器日志
-- 怎么判断 MQTT 有没有收到数据
-- 怎么判断告警有没有触发
-
-常用命令：
-
-```bash
-docker compose ps
-docker logs -f edgepulse-backend
-docker logs -f edgepulse-edge-simulator
-docker compose down
-docker compose up -d
-```
-
-面试意义：
-
-> 这说明你不是只会写代码，还知道服务跑起来以后怎么定位问题。
-
-### 1.6 Git / GitHub 工程流程
-
-需要掌握：
-
-- 每完成一个功能做一次 commit
-- README 怎么写
-- GitHub 仓库如何展示项目
-- 面试时如何打开仓库讲项目
-
-当前已经做到：
-
-- 创建 GitHub 仓库
-- 提交初始项目
-- 后续修复导航功能并推送
-
-建议后续 commit 粒度：
+你不需要先把物联网、Spring Boot、Vue、Docker 全部学完。现在的策略是：
 
 ```text
-Add product and thing model modules
-Add inactive device alarm
-Improve README with architecture diagram
-Add demo screenshots
+先抓项目主线
+再顺着主线补关键知识
+最后准备简历和问答
 ```
 
-## 2. 知识点与开发过程对应
+## 0. 这个项目到底是什么
 
-### 阶段 1：项目结构搭建
-
-开发目标：
-
-- 搭建 Spring Boot 后端
-- 搭建 Vue 前端
-- 建立 Docker Compose
-- 建立 GitHub 仓库
-
-需要掌握：
-
-- Spring Boot 项目目录结构
-- Vue 项目目录结构
-- 前后端分离的基本概念
-- Git 提交和 GitHub 远程仓库
-
-项目文件：
+这个项目叫：
 
 ```text
-backend/
-frontend/
-docker-compose.yml
-README.md
+EdgePulse IoT
 ```
 
-你需要能回答：
+你可以把它理解成一个简化版工业物联网监控平台。
 
-- 为什么后端和前端分成两个目录？
-- 为什么不是一个传统 Java Web 项目？
-- Docker Compose 是干什么的？
-- GitHub 仓库对简历有什么用？
+它做的事很直白：
 
-推荐回答：
+```text
+模拟工业设备不断产生温度、电压数据
+设备通过 MQTT 把数据发给平台
+后端接收数据
+后端保存历史数据和实时状态
+后端根据规则判断是否异常
+异常时生成告警
+前端看板展示设备、曲线、告警和规则
+Docker 一键启动整套系统
+```
 
-> 这个项目采用前后端分离结构，后端负责设备接入、业务处理和数据接口，前端负责可视化展示。Docker Compose 用来统一启动 MySQL、Redis、MQTT、后端、前端和模拟器，方便部署和演示。
+一句话版本：
 
-### 阶段 2：设备模拟与 MQTT 接入
+> 我做了一个基于 Spring Boot + Vue + MQTT 的边缘工业设备监控与实时告警平台，用来模拟设备数据采集、实时状态展示、规则告警和 Docker 部署。
 
-开发目标：
+## 1. 为什么要做这个项目
 
-- 用 Python 模拟工业设备
-- 通过 MQTT 上报数据
-- 后端订阅 MQTT topic
-- 接收并解析设备数据
+如果只做一个普通后台管理系统，面试时很容易变成：
 
-需要掌握：
+```text
+我做了增删改查
+我用了 Spring Boot
+我用了 Vue
+我连了数据库
+```
 
-- MQTT 是什么
-- Topic 是什么
-- 发布 / 订阅模型
-- 为什么 IoT 项目常用 MQTT
-- JSON 数据格式
+这个说法太普通。
 
-项目文件：
+IoT 项目更有价值的地方在于它不是普通 CRUD，而是有一条数据流：
+
+```text
+设备数据上报 -> 平台接入 -> 存储 -> 规则判断 -> 告警 -> 看板展示
+```
+
+这条链路能说明你理解真实工程系统，不只是会写页面和接口。
+
+所以这个项目一开始就不是为了做大而全，而是为了做一个完整闭环。
+
+## 2. 第一件事：确定项目边界
+
+一开始不能贪大。
+
+完整 IoT 平台可能包含：
+
+```text
+设备管理
+产品管理
+物模型
+多协议接入
+规则链
+告警
+通知
+权限
+数据转发
+大屏
+移动端
+边缘计算
+时序数据库
+```
+
+这些全做会崩。
+
+所以第一版只做最核心的闭环：
+
+```text
+模拟设备
+MQTT 接入
+数据入库
+实时状态
+阈值告警
+SSE 推送
+Vue 看板
+Docker 部署
+```
+
+这个边界对本科就业项目比较合适：
+
+- 能做完
+- 能演示
+- 能讲清
+- 能投 Java 后端 / 全栈 / 物联网方向
+
+面试可以这样说：
+
+> 我没有一开始就做完整 IoT 平台，而是先收敛成设备数据采集、规则告警和可视化看板这条核心链路，保证项目能完整跑通。
+
+## 3. 第二件事：搭项目结构
+
+项目采用前后端分离结构：
+
+```text
+edgepulse-iot/
+  backend/          Spring Boot 后端
+  frontend/         Vue 前端
+  edge-simulator/   模拟设备
+  infra/            MQTT 配置
+  docs/             文档和接口示例
+  docker-compose.yml
+```
+
+为什么这么分？
+
+因为每一块职责不同：
+
+```text
+backend       负责业务逻辑和接口
+frontend      负责页面展示
+edge-simulator 模拟真实设备
+infra         放基础设施配置
+docker-compose.yml 统一启动全部服务
+```
+
+面试可以这样说：
+
+> 我把项目拆成后端、前端、边缘模拟器和基础设施配置几个部分，这样结构比较清晰，也方便 Docker Compose 编排。
+
+## 4. 第三件事：先做模拟设备
+
+真实工业设备你现在没有，所以第一步不是写复杂后端，而是先造一个设备数据源。
+
+项目里用 Python 写了一个模拟器：
 
 ```text
 edge-simulator/simulator.py
-backend/src/main/java/com/edgepulse/mqtt/MqttTelemetrySubscriber.java
-infra/mosquitto/mosquitto.conf
 ```
 
-当前 Topic：
+它做三件事：
 
 ```text
-iot/device/{deviceId}/telemetry
+模拟 dev001、dev002、dev003 三台设备
+每 5 秒生成一次温度和电压
+把数据发布到 MQTT
 ```
 
-当前数据格式：
+数据长这样：
 
 ```json
 {
@@ -231,410 +175,380 @@ iot/device/{deviceId}/telemetry
 }
 ```
 
-你需要能回答：
+为什么要先做模拟器？
 
-- 为什么不用 HTTP 让设备直接上报？
-- MQTT 的发布订阅和普通接口调用有什么区别？
-- topic 为什么这样设计？
-- 后端怎么知道是哪台设备的数据？
+因为没有设备数据，后面的后端、告警、看板都没法验证。
 
-推荐回答：
+面试可以这样说：
 
-> MQTT 更适合设备侧低开销、持续上报和消息订阅场景。设备只负责往约定 topic 发布遥测数据，平台后端订阅 `iot/device/+/telemetry`，可以统一接收所有设备的数据。
+> 因为没有真实硬件设备，所以我先做了一个边缘设备模拟器，用来模拟工业设备周期性上报温度和电压数据。
 
-### 阶段 3：设备管理
+## 5. 第四件事：引入 MQTT
 
-开发目标：
+设备数据不是直接调 HTTP 接口，而是通过 MQTT。
 
-- 保存设备基础信息
-- 维护设备在线状态
-- 展示设备列表
-- 记录最近上报时间
+项目里用了 Mosquitto 作为 MQTT Broker。
 
-需要掌握：
-
-- 设备实体怎么抽象
-- 设备 ID 的意义
-- 设备状态如何更新
-- 在线状态和最后上报时间的关系
-
-项目文件：
+你可以把 MQTT Broker 理解成一个消息中转站：
 
 ```text
-Device.java
-DeviceStatus.java
-DeviceController.java
-DeviceRepository.java
-TelemetryService.java
+设备把数据发给 Broker
+后端订阅 Broker 的 topic
+Broker 把消息转给后端
 ```
 
-当前实现：
-
-- 设备第一次上报时自动注册
-- 设备状态设为 `ONLINE`
-- 更新 `lastSeenAt`
-- 前端展示设备列表
-
-你需要能回答：
-
-- 设备为什么需要单独建表？
-- 设备状态是怎么来的？
-- 现在有没有离线判断？
-- 如何扩展成正式设备管理？
-
-当前不足：
-
-- 还没有产品管理
-- 还没有设备密钥
-- 还没有设备主动离线判断
-- 还没有设备编辑页面
-
-后续扩展：
+当前 topic 设计是：
 
 ```text
-Product
-DeviceCredential
-ThingModel
-InactiveDeviceScanner
+iot/device/{deviceId}/telemetry
 ```
 
-### 阶段 4：产品管理与物模型
-
-当前项目状态：
-
-第一版还没有正式实现产品管理和物模型，但这是非常值得补的第二阶段功能。
-
-需要掌握：
-
-- 产品是什么
-- 设备是什么
-- 产品和设备的关系
-- 物模型是什么
-- 属性、事件、命令怎么区分
-
-推荐抽象：
+例如：
 
 ```text
-Product
-  - id
-  - name
-  - protocol
-  - description
-
-Device
-  - id
-  - productId
-  - name
-  - status
-  - lastSeenAt
-
-ThingModelProperty
-  - productId
-  - identifier
-  - name
-  - dataType
-  - unit
-
-ThingModelEvent
-  - productId
-  - identifier
-  - name
-  - level
-
-ThingModelCommand
-  - productId
-  - identifier
-  - name
-  - inputSchema
+iot/device/dev001/telemetry
+iot/device/dev002/telemetry
 ```
 
-简化理解：
+后端订阅：
 
 ```text
-产品 = 一类设备的模板
-设备 = 某一台真实设备
-物模型 = 这类设备有哪些属性、事件、命令
+iot/device/+/telemetry
 ```
 
-举例：
+这里的 `+` 表示匹配任意一个设备编号。
+
+为什么用 MQTT？
+
+因为 IoT 设备通常是持续上报数据，MQTT 的发布订阅模型更适合这种场景。
+
+面试可以这样说：
+
+> 设备侧使用 MQTT 发布遥测数据，后端统一订阅 `iot/device/+/telemetry`。这样设备只需要按 topic 上报，平台可以统一接入多台设备的数据。
+
+## 6. 第五件事：做 Spring Boot 后端接入
+
+后端的入口是：
 
 ```text
-产品：温控采集器
-设备：dev001
-属性：temperature、voltage
-事件：high_temperature
-命令：restart、set_threshold
+MqttTelemetrySubscriber
 ```
 
-面试讲法：
-
-> 当前版本先固定了温度和电压两个遥测字段，后续可以抽象产品和物模型，把不同设备类型的属性定义放到数据库中，这样平台就不依赖固定字段。
-
-### 阶段 5：历史数据与实时状态
-
-开发目标：
-
-- MySQL 存历史遥测数据
-- Redis 存实时设备状态
-- 前端展示最新数据和曲线
-
-需要掌握：
-
-- 历史数据和实时状态的区别
-- 为什么遥测数据会越来越大
-- MySQL 和时序数据库的差异
-- Redis 的作用
-
-项目文件：
+它负责：
 
 ```text
-TelemetryData.java
-TelemetryRepository.java
-DeviceStatusCache.java
-TelemetryController.java
+连接 MQTT Broker
+订阅设备数据 topic
+收到消息后解析 JSON
+转换成 TelemetryMessage
+交给 TelemetryService 处理
 ```
 
-当前实现：
+也就是说，MQTT 模块只负责接消息，不负责业务。
 
-- 每条遥测数据写入 MySQL
-- 设备状态写入 Redis
-- 前端展示最新 20 条数据和曲线
-
-你需要能回答：
-
-- 为什么不用 Redis 存所有历史数据？
-- 为什么现在用 MySQL，不直接上 TDengine / InfluxDB？
-- 查询曲线数据为什么需要按设备和时间查？
-
-推荐回答：
-
-> 当前版本为了降低复杂度使用 MySQL 存储历史遥测数据。真实工业场景数据量更大，可以替换为 TDengine、InfluxDB 等时序数据库。
-
-### 阶段 6：阈值告警
-
-开发目标：
-
-- 配置告警规则
-- 判断温度、电压是否异常
-- 生成告警记录
-- 支持确认和解决
-
-需要掌握：
-
-- 规则表达方式
-- 阈值判断
-- 告警生命周期
-- 重复告警抑制
-
-项目文件：
+业务处理放在：
 
 ```text
-AlarmRule.java
-Alarm.java
-AlarmService.java
-AlarmController.java
-AlarmRuleController.java
-SeedDataService.java
+TelemetryService
 ```
 
-当前规则：
+它负责：
 
 ```text
-temperature > 80 -> CRITICAL
-voltage < 180 -> WARN
+保存设备信息
+更新设备在线状态
+保存遥测数据
+触发告警判断
+推送实时事件
 ```
 
-当前生命周期：
+这里有一个重要思想：
 
 ```text
-ACTIVE -> ACKED -> RESOLVED
+接入层和业务层分开
 ```
 
-你需要能回答：
+以后如果不用 MQTT，改成 HTTP、Modbus、OPC UA，也可以先转换成同一个 `TelemetryMessage`，后面的业务流程不变。
 
-- 告警规则为什么要做成表，而不是写死？
-- 为什么要有 ACKED？
-- 为什么要有 RESOLVED？
-- 重复告警为什么要抑制？
+面试可以这样说：
 
-推荐回答：
+> 我把 MQTT 接入和业务处理分开。MQTT 模块只负责订阅和解析消息，业务层统一处理 TelemetryMessage，这样后续扩展其他协议会更容易。
 
-> ACTIVE 表示告警刚发生，ACKED 表示人工已确认，RESOLVED 表示问题已处理。重复告警抑制是为了避免设备持续异常时刷屏。
+## 7. 第六件事：设计数据库对象
 
-### 阶段 7：设备不活跃告警
-
-当前项目状态：
-
-还没有实现，这是下一步非常值得补的功能。
-
-设计方式：
+第一版设计了四个核心对象：
 
 ```text
-定时任务每 30 秒扫描一次设备
-如果 now - lastSeenAt > 60 秒
-则设备状态改为 OFFLINE
-并生成 inactive alarm
+Device        设备
+TelemetryData 历史遥测数据
+AlarmRule     告警规则
+Alarm         告警记录
 ```
 
-需要掌握：
+### Device
 
-- 定时任务
-- 设备心跳
-- lastSeenAt 判断
-- 离线状态和离线告警
+表示一台设备。
 
-推荐实现：
+保存：
 
 ```text
-InactiveDeviceScanner
-DeviceOfflineAlarmService
+设备 ID
+设备名称
+设备类型
+在线状态
+最近上报时间
 ```
 
-面试讲法：
+为什么需要设备表？
 
-> 除了设备上报异常值，我还设计了不活跃检测。如果设备超过阈值时间未上报，系统会把它标记为离线并生成告警。
+因为平台不能只看到一条条数据，还要知道这些数据属于哪台设备。
 
-### 阶段 8：SSE 实时推送与 Dashboard
+### TelemetryData
 
-开发目标：
+表示设备上报的一条历史数据。
 
-- 后端通过 SSE 推送事件
-- 前端收到事件后刷新看板
-- 展示设备、曲线、告警
-
-需要掌握：
-
-- SSE 是什么
-- SSE 和 WebSocket 的区别
-- 为什么监控看板适合 SSE
-- Dashboard 为什么是 IoT 平台核心
-
-项目文件：
+保存：
 
 ```text
-EventStreamService.java
-EventController.java
+deviceId
+temperature
+voltage
+reportedAt
+receivedAt
+```
+
+为什么单独存历史数据？
+
+因为曲线、趋势、追溯都需要历史数据。
+
+### AlarmRule
+
+表示告警规则。
+
+当前有两条默认规则：
+
+```text
+temperature > 80
+voltage < 180
+```
+
+为什么规则要放数据库？
+
+因为规则不应该永远写死在代码里。
+
+### Alarm
+
+表示一次告警事件。
+
+保存：
+
+```text
+哪台设备
+哪个指标
+当前值
+阈值
+告警等级
+告警状态
+创建时间
+```
+
+面试可以这样说：
+
+> 数据库里我主要设计了设备、遥测数据、告警规则和告警记录四类表。设备是基础对象，遥测数据用于历史查询，规则用于判断异常，告警记录用于运维处理。
+
+## 8. 第七件事：区分 MySQL 和 Redis
+
+这个项目里 MySQL 和 Redis 职责不一样。
+
+MySQL 保存：
+
+```text
+设备表
+历史遥测数据
+告警规则
+告警记录
+```
+
+Redis 保存：
+
+```text
+设备实时状态
+```
+
+也就是：
+
+```text
+device:status:dev001
+```
+
+为什么不全放 MySQL？
+
+可以全放 MySQL，但 Redis 更适合存实时状态和热点数据。
+
+为什么不全放 Redis？
+
+Redis 不适合长期保存大量历史遥测数据。
+
+面试可以这样说：
+
+> MySQL 作为权威数据源保存历史数据和规则配置，Redis 作为实时状态缓存，用来保存设备当前状态和最近上报时间。
+
+## 9. 第八件事：做阈值告警
+
+告警逻辑在：
+
+```text
+AlarmService
+```
+
+当前逻辑是：
+
+```text
+收到设备数据
+查询启用的告警规则
+取出对应指标值
+判断是否超过阈值
+如果触发，生成告警
+```
+
+例如：
+
+```text
+temperature = 89.81
+规则是 temperature > 80
+所以生成 CRITICAL 告警
+```
+
+告警状态有三个：
+
+```text
+ACTIVE    活动中
+ACKED     已确认
+RESOLVED  已解决
+```
+
+为什么需要这三个状态？
+
+因为真实告警不是生成完就结束。
+
+它一般经历：
+
+```text
+系统发现异常
+人工确认看到
+问题处理完成
+```
+
+项目还做了重复告警抑制：
+
+```text
+同设备同指标 5 分钟内不重复刷告警
+```
+
+面试可以这样说：
+
+> 告警模块支持 ACTIVE、ACKED、RESOLVED 生命周期，并加入了重复告警抑制，避免设备持续异常时不断刷屏。
+
+## 10. 第九件事：做实时推送
+
+前端不能只靠手动刷新。
+
+所以后端提供了 SSE：
+
+```text
+/api/events/stream
+```
+
+SSE 可以理解成：
+
+```text
+浏览器和后端保持一条连接
+后端有新事件时主动推给前端
+```
+
+为什么用 SSE，不用 WebSocket？
+
+因为这个项目主要是：
+
+```text
+后端 -> 前端
+```
+
+单向推送为主。
+
+WebSocket 更适合双向通信，比如聊天、游戏、协同编辑。
+
+面试可以这样说：
+
+> 看板主要是接收后端的设备状态和告警事件，所以我用了 SSE 实现轻量级实时推送，而不是引入更复杂的 WebSocket。
+
+## 11. 第十件事：做 Vue 看板
+
+前端不是为了好看而已。
+
+IoT 项目里 Dashboard 很重要，因为设备数据本身很难直接理解。
+
+看板把数据变成：
+
+```text
+设备是否在线
+是否有异常
+指标趋势如何
+告警是否处理
+规则是否启用
+```
+
+当前页面包括：
+
+```text
+总览指标
+设备列表
+遥测曲线
+告警中心
+告警规则
+```
+
+左侧导航对应：
+
+```text
+总览
+设备
+告警
+规则
+```
+
+前端调用后端接口的位置：
+
+```text
+frontend/src/api.js
+```
+
+主要页面：
+
+```text
 frontend/src/App.vue
 ```
 
-推荐回答：
+面试可以这样说：
 
-> 这个项目是监控型场景，数据主要从后端推到前端，前端不需要高频双向通信，所以用 SSE 比 WebSocket 更简单。
+> 前端看板不是简单展示表格，而是把设备实时状态、历史曲线、告警处理和规则配置集中展示，形成一个可观察的监控台。
 
-Dashboard 的价值：
+## 12. 第十一件事：用 Docker Compose 包装
 
-- 设备是否在线
-- 当前是否异常
-- 异常趋势如何
-- 告警是否处理
-- 系统是否真的在运行
-
-面试讲法：
-
-> IoT 平台的核心不是简单管理设备，而是把设备数据转成可观察、可判断、可处理的业务状态。Dashboard 就是把数据流变成运维视角。
-
-### 阶段 9：Rule Engine / Rule Chain 思想
-
-当前项目状态：
-
-当前版本是极简规则引擎，不是完整 Rule Chain。
-
-需要掌握：
-
-- Rule Engine 是什么
-- Rule Chain 是什么
-- 当前项目和 ThingsBoard 的区别
-- 如何从简单规则演进到规则链
-
-当前版本：
+如果不用 Docker，你需要分别安装：
 
 ```text
-TelemetryMessage
-  -> AlarmService.evaluate()
-  -> match rules
-  -> generate alarm
+MySQL
+Redis
+Mosquitto
+Java
+Node
+Python
 ```
 
-规则链思想：
+这对演示和部署很麻烦。
 
-```text
-数据输入
-  -> 过滤节点
-  -> 条件判断节点
-  -> 告警节点
-  -> 通知节点
-  -> 数据转发节点
-```
-
-短期面试讲法：
-
-> 当前版本实现了基于数据库配置的轻量级规则判断，主要支持阈值告警。它不是完整可视化规则链，但设计上可以继续扩展成规则节点和规则链。
-
-### 阶段 10：多协议接入抽象
-
-当前项目状态：
-
-第一版只实现 MQTT。
-
-需要掌握：
-
-- 为什么工业 IoT 会有多协议
-- MQTT、HTTP、Modbus、OPC UA 的差异
-- 多协议接入为什么要抽象
-
-推荐抽象：
-
-```text
-DeviceProtocolAdapter
-  - connect()
-  - subscribe()
-  - decode()
-  - publishCommand()
-
-MqttProtocolAdapter
-HttpProtocolAdapter
-ModbusProtocolAdapter
-OpcUaProtocolAdapter
-```
-
-核心思想：
-
-```text
-不同协议接入
-  -> 统一转换成 TelemetryMessage
-  -> 进入同一套业务处理流程
-```
-
-面试讲法：
-
-> 当前项目先实现 MQTT 接入，但后端业务层只关心统一的 TelemetryMessage。后续如果接入 HTTP、Modbus 或 OPC UA，只需要新增协议适配器，把不同协议的数据转换为统一模型。
-
-### 阶段 11：Docker / Linux 部署
-
-开发目标：
-
-- 用 Docker Compose 启动整套系统
-- 在 Docker Desktop 本地运行
-- 后续可以迁移到 Linux 服务器
-
-需要掌握：
-
-- 容器是什么
-- 镜像是什么
-- Docker Compose 是什么
-- 后端、前端、MySQL、Redis、MQTT 为什么拆成多个服务
-
-项目文件：
-
-```text
-docker-compose.yml
-backend/Dockerfile
-frontend/Dockerfile
-edge-simulator/Dockerfile
-infra/mosquitto/mosquitto.conf
-```
-
-当前服务：
+所以项目用 Docker Compose 一次性启动：
 
 ```text
 mysql
@@ -645,68 +559,41 @@ frontend
 edge-simulator
 ```
 
-常用命令：
+项目启动命令：
 
 ```bash
-docker compose up -d --build
-docker compose ps
-docker logs -f edgepulse-backend
-docker logs -f edgepulse-edge-simulator
+docker compose up -d
+```
+
+项目停止命令：
+
+```bash
 docker compose down
 ```
 
-面试讲法：
+查看容器：
 
-> 我用 Docker Compose 把后端、前端、数据库、缓存、MQTT Broker 和边缘模拟器编排到一起，可以一条命令启动完整环境，方便本地演示和 Linux 部署。
-
-### 阶段 12：README 和演示图
-
-开发目标：
-
-- GitHub 首页能看懂项目
-- 面试官能快速看到价值
-- 简历项目能和仓库对应
-
-README 需要包含：
-
-- 项目简介
-- 架构图
-- 技术栈
-- 功能模块
-- 快速启动
-- 接口示例
-- 页面截图
-- 项目亮点
-- 后续计划
-
-建议架构图：
-
-```text
-Edge Simulator
-  -> Mosquitto MQTT
-  -> Spring Boot Backend
-  -> MySQL / Redis
-  -> SSE
-  -> Vue Dashboard
+```bash
+docker compose ps
 ```
 
-需要补的演示图：
+查看后端日志：
 
-```text
-docs/images/dashboard.png
-docs/images/alarm-center.png
-docs/images/rule-view.png
+```bash
+docker logs -f edgepulse-backend
 ```
 
-短期建议：
+面试可以这样说：
 
-先用浏览器截图，不追求设计稿。重点是 README 里能看到项目已经跑起来。
+> 我用 Docker Compose 把数据库、缓存、MQTT Broker、后端、前端和设备模拟器统一编排，做到一条命令启动完整项目环境。
 
-## 3. 使用与验证清单
+## 13. 第十二件事：怎么验证项目
 
-### 3.1 验证 Docker 服务
+项目不是“页面能打开”就算完成。
 
-命令：
+你要按链路验证。
+
+### 13.1 看容器是否都启动
 
 ```bash
 docker compose ps
@@ -723,69 +610,65 @@ edgepulse-frontend
 edgepulse-edge-simulator
 ```
 
-### 3.2 验证设备在线
+### 13.2 看模拟器是否在发数据
 
-接口：
-
-```text
-GET http://localhost:8080/api/devices
+```bash
+docker logs -f edgepulse-edge-simulator
 ```
 
-预期：
+应该看到：
 
 ```text
-dev001 ONLINE
-dev002 ONLINE
-dev003 ONLINE
+iot/device/dev001/telemetry
+iot/device/dev002/telemetry
+iot/device/dev003/telemetry
 ```
 
-### 3.3 验证遥测数据
+### 13.3 看后端是否订阅 MQTT
 
-接口：
+```bash
+docker logs -f edgepulse-backend
+```
+
+应该看到类似：
 
 ```text
-GET http://localhost:8080/api/telemetry/latest
+Subscribed to MQTT topic iot/device/+/telemetry
 ```
 
-预期：
+### 13.4 看接口是否有设备
+
+浏览器打开：
 
 ```text
-temperature
-voltage
-reportedAt
+http://localhost:8080/api/devices
 ```
 
-### 3.4 验证告警
-
-接口：
+应该看到：
 
 ```text
-GET http://localhost:8080/api/alarms
+dev001
+dev002
+dev003
+ONLINE
 ```
 
-预期：
+### 13.5 看接口是否有告警
+
+浏览器打开：
+
+```text
+http://localhost:8080/api/alarms
+```
+
+应该看到：
 
 ```text
 temperature GT 80
 voltage LT 180
 ```
 
-### 3.5 验证规则
-
-接口：
-
-```text
-GET http://localhost:8080/api/alarm-rules
-```
-
-预期：
-
-```text
-temperature GT 80 CRITICAL
-voltage LT 180 WARN
-```
-
-### 3.6 验证前端
+### 13.6 看前端看板
 
 浏览器打开：
 
@@ -795,111 +678,157 @@ http://localhost:5173
 
 检查：
 
-- 总览指标有数据
-- 设备列表有 3 台设备
-- 曲线持续变化
-- 告警中心有告警记录
-- 左侧导航可以跳转
-- 规则板块能看到阈值规则
-
-## 4. 高频问题与回答
-
-### Q1：这个项目和普通后台管理系统有什么区别？
-
-普通后台管理系统主要是 CRUD。这个项目重点是设备数据流：
-
 ```text
-设备上报 -> MQTT 接入 -> 数据存储 -> 规则判断 -> 告警 -> 实时看板
+设备总数是否为 3
+在线设备是否为 3
+曲线是否变化
+告警中心是否有记录
+规则区域是否有两条规则
 ```
 
-它更接近 IoT 平台的核心链路。
-
-### Q2：为什么使用 MQTT？
-
-MQTT 是发布订阅模型，适合设备低开销、持续上报、平台统一订阅的场景。设备不需要直接调用复杂接口，只要往 topic 发消息。
-
-### Q3：为什么要用 Redis？
-
-Redis 用来保存实时状态，例如设备是否在线、最近上报时间。MySQL 保存历史数据，Redis 保存当前状态，两者职责不同。
-
-### Q4：为什么用 SSE，不用 WebSocket？
-
-这个项目主要是后端把设备状态和告警推送给前端，属于单向实时推送。SSE 比 WebSocket 更简单，适合监控看板。
-
-### Q5：为什么现在不用时序数据库？
-
-本科就业项目优先保证完整闭环。MySQL 足够支撑演示和学习。后续可以把遥测表迁移到 TDengine 或 InfluxDB。
-
-### Q6：规则引擎是不是太简单？
-
-当前版本是轻量级规则判断，支持数据库配置的阈值规则。后续可以扩展成 Rule Engine，把规则拆成过滤、判断、告警、通知、转发等节点。
-
-### Q7：设备不在线怎么判断？
-
-当前版本还没有完整离线扫描。设计上可以通过定时任务检查 `lastSeenAt`，超过阈值未上报就标记为 `OFFLINE` 并生成不活跃告警。
-
-### Q8：多协议接入怎么扩展？
-
-新增协议适配器，把 MQTT、HTTP、Modbus、OPC UA 等不同协议的数据统一转换成 `TelemetryMessage`，后面的业务处理流程保持不变。
-
-### Q9：Docker 在项目里起什么作用？
-
-Docker Compose 把 MySQL、Redis、MQTT、后端、前端、模拟器一起启动，解决环境依赖问题，方便演示和部署。
-
-### Q10：这个项目可以写进简历吗？
-
-可以。建议写法：
+如果这些都成立，说明整条链路跑通：
 
 ```text
-基于 Spring Boot + MQTT 的边缘工业设备监控与实时告警平台
+模拟设备 -> MQTT -> 后端 -> 数据库 -> 告警 -> 前端
 ```
 
-项目描述：
+## 14. 你应该怎么把它讲成自己的项目
+
+不要一上来背技术栈。
+
+先讲问题，再讲方案。
+
+推荐顺序：
 
 ```text
-实现设备数据采集、实时状态管理、历史数据存储、规则告警、SSE 推送和 Vue 可视化看板，并通过 Docker Compose 完成一键部署。
+我想做一个轻量级 IoT 监控平台
+先用模拟器模拟工业设备数据
+用 MQTT 做设备接入
+后端用 Spring Boot 处理数据
+MySQL 存历史数据
+Redis 存实时状态
+规则模块负责告警
+SSE 把实时事件推给前端
+Vue 看板展示设备、曲线和告警
+最后用 Docker Compose 一键部署
 ```
 
-## 5. 后续最值得补的功能
+可以这样说：
 
-按短期收益排序：
+> 这个项目的核心不是普通后台 CRUD，而是一条完整的设备数据链路。设备模拟器通过 MQTT 上报温度和电压，后端订阅消息后保存历史数据、更新实时状态，并根据数据库中的阈值规则生成告警。前端通过接口和 SSE 展示设备状态、遥测曲线和告警处理流程。最后我用 Docker Compose 把 MySQL、Redis、MQTT、后端、前端和模拟器统一部署。
 
+## 15. 面试官可能会问什么
+
+### Q1：你为什么用 MQTT？
+
+回答：
+
+> 因为设备是持续上报数据，MQTT 的发布订阅模型更适合设备接入。设备只需要往 topic 发数据，后端统一订阅即可。
+
+### Q2：为什么要有模拟器？
+
+回答：
+
+> 没有真实工业设备，所以我写了一个边缘设备模拟器，模拟多台设备周期性上报温度和电压，用来验证整条 IoT 数据链路。
+
+### Q3：Redis 在这里干什么？
+
+回答：
+
+> Redis 用来保存设备实时状态，比如在线状态和最后上报时间。MySQL 保存历史数据和规则配置。
+
+### Q4：告警怎么触发？
+
+回答：
+
+> 后端收到遥测数据后，会查询启用的告警规则，比如 temperature > 80 或 voltage < 180。满足条件就生成 ACTIVE 告警。
+
+### Q5：为什么有 ACKED 和 RESOLVED？
+
+回答：
+
+> ACTIVE 表示系统发现异常，ACKED 表示人工已确认，RESOLVED 表示问题处理完成。这更接近真实运维流程。
+
+### Q6：SSE 和 WebSocket 为什么选 SSE？
+
+回答：
+
+> 这个项目主要是后端把状态和告警推给前端，是单向推送场景。SSE 实现更简单，足够满足监控看板。
+
+### Q7：怎么扩展多协议？
+
+回答：
+
+> 可以抽象协议适配器。不同协议接入后，都转换成统一的 TelemetryMessage，后面的存储、告警和推送流程保持不变。
+
+### Q8：现在有什么不足？
+
+回答：
+
+> 当前版本重点做核心链路，还没有完整的产品管理、物模型管理、设备不活跃告警和权限系统。后续我会优先补设备离线检测和物模型抽象。
+
+## 16. 下一步最该补什么
+
+短期最值得补三件事：
+
+```text
 1. 设备不活跃告警
-2. 产品管理
-3. 物模型管理
-4. README 架构图和演示截图
-5. 告警规则新增/编辑页面
-6. 设备详情页
-7. 登录和权限
-8. 多协议适配器接口
-9. 通知模块，例如邮件或 Webhook
-10. 时序数据库替换方案说明
-
-最推荐下一步：
-
-```text
-先做设备不活跃告警 + README 演示图
+2. 产品管理 + 物模型管理
+3. README 架构图和演示截图
 ```
 
-原因：
+为什么？
 
-- 设备不活跃告警能补齐 IoT 监控的重要场景
-- README 演示图能立刻提升 GitHub 仓库观感
-- 这两项对投简历收益很高
+因为这三件事最能提升面试说服力。
 
-## 6. 学习顺序建议
+### 设备不活跃告警
 
-不要从专业书开始，按项目倒推：
+让项目从“数值异常”扩展到“设备离线异常”。
 
-1. 先会启动项目
-2. 看懂 Docker 里有哪些服务
-3. 看懂模拟器发了什么数据
-4. 看懂 MQTT topic
-5. 看懂后端如何接收数据
-6. 看懂数据如何入库
-7. 看懂规则如何触发告警
-8. 看懂前端如何展示
-9. 再补产品、物模型、多协议这些抽象
-10. 最后准备简历和问答
+### 产品管理 + 物模型
 
-这条路线最适合当前目标：短期形成项目能力，而不是长期理论学习。
+让项目更像真正的 IoT 平台。
+
+### README 架构图和演示截图
+
+让 GitHub 仓库更适合投简历。
+
+## 17. 你现在的学习方式
+
+不要这样学：
+
+```text
+先系统学 Spring Boot
+再系统学 Vue
+再系统学 MQTT
+再系统学 Docker
+最后再看项目
+```
+
+太慢。
+
+应该这样学：
+
+```text
+先跑起来
+再按数据流看代码
+再按模块补知识
+再准备面试表达
+```
+
+具体顺序：
+
+```text
+1. 会启动和停止项目
+2. 会看 Docker 容器
+3. 会看模拟器日志
+4. 会看后端日志
+5. 会打开前端看板
+6. 会解释 MQTT topic
+7. 会解释 TelemetryService
+8. 会解释 AlarmService
+9. 会解释 MySQL 和 Redis 分工
+10. 会完整讲一遍项目
+```
+
+掌握到这个程度，就足够先进入简历准备阶段。
