@@ -30,3 +30,7 @@ tmp/
 temp/
 tools/
 ~$*
+
+# Private career and learning notes
+docs/project-learning-map.md
+docs/job-screening.md
