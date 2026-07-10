@@ -105,13 +105,6 @@ POST /api/telemetry
 GET  /api/events/stream
 ```
 
-## Documentation
-
-```text
-docs/api.http              API request examples
-docs/delivery-manual.md    Deployment and delivery manual
-```
-
 ## Alarm Model
 
 EdgePulse currently supports threshold-based alarm rules for telemetry fields such as:
