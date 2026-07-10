@@ -105,10 +105,11 @@ POST /api/telemetry
 GET  /api/events/stream
 ```
 
-API examples are available in:
+## Documentation
 
 ```text
-docs/api.http
+docs/api.http              API request examples
+docs/delivery-manual.md    Deployment and delivery manual
 ```
 
 ## Alarm Model
